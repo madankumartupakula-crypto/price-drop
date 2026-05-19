@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 
-const uri = process.env.MONGODB_URI;
+const uri = 'mongodb+srv://galligamer999_db_user:tv6bqmz1fAJxisz1@cluster0.mhxeuxm.mongodb.net/?appName=Cluster0';
 
 if (!uri) {
   throw new Error('Missing MONGODB_URI. Add it to a .env file in the project root.');

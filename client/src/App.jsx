@@ -37,6 +37,9 @@ import {
   verifyOtp
 } from './lib/api.js';
 
+const currencySymbol = '₹';
+const formatCurrency = (value) => `${currencySymbol}${Number(value).toFixed(2)}`;
+
 function Button({ children, className = '', variant = 'primary', ...props }) {
   return (
     <button className={`button button-${variant} ${className}`} {...props}>
@@ -67,7 +70,7 @@ function LandingPage({ onEnter }) {
               <div className="hero-product large">
                 <ShoppingBag />
                 <span>Noise-cancelling headphones</span>
-                <strong>$179.99</strong>
+                <strong>{formatCurrency(179.99)}</strong>
               </div>
               <div className="hero-product">
                 <LineChart />
@@ -77,7 +80,7 @@ function LandingPage({ onEnter }) {
               <div className="hero-product">
                 <Bell />
                 <span>Target hit</span>
-                <strong>$149.00</strong>
+                <strong>{formatCurrency(149.0)}</strong>
               </div>
             </div>
           </div>
@@ -190,10 +193,10 @@ function AuthPage({ onAuthenticated, onHome }) {
           ) : (
             <form className="form" onSubmit={handleVerifyOtp}>
               <label>
-                <span>6-digit OTP</span>
-                <input required inputMode="numeric" maxLength="6" pattern="[0-9]{6}" placeholder="123456" value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} />
+                <span>OTP</span>
+                <input required placeholder="Enter any OTP" value={otp} onChange={(event) => setOtp(event.target.value)} />
               </label>
-              <Button type="submit" disabled={loading || otp.length !== 6}>
+              <Button type="submit" disabled={loading || otp.trim().length === 0}>
                 {loading ? <Loader2 className="spin" size={18} /> : <User size={18} />}
                 Verify & Continue
               </Button>
@@ -315,7 +318,7 @@ function PriceChart({ data }) {
         <Tooltip
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
-            return <div className="chart-tip">${payload[0].value}</div>;
+            return <div className="chart-tip">{formatCurrency(payload[0].value)}</div>;
           }}
         />
       </RechartsLineChart>
@@ -331,11 +334,20 @@ function ProductCard({ product }) {
   const priceDiff = Math.abs(latestPrice - previousPrice);
   const diffPercent = previousPrice ? ((priceDiff / previousPrice) * 100).toFixed(1) : '0.0';
   const progressToTarget = latestPrice ? Math.min(100, ((Number(product.targetPrice) || latestPrice) / latestPrice) * 100) : 0;
+  const fallbackImage = `https://picsum.photos/seed/${encodeURIComponent(product.retailer || product.name || 'product')}/600/400`;
 
   return (
     <article className="product-card">
       <div className="product-image">
-        <img src={product.imageUrl} alt={product.name} />
+        <img
+          src={product.imageUrl || fallbackImage}
+          alt={product.name}
+          referrerPolicy="no-referrer"
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = fallbackImage;
+          }}
+        />
         <div className="badge-stack">
           <span className="badge">{product.retailer}</span>
           <span className={`badge ${product.recommendation === 'buy_now' ? 'good' : 'warn'}`}>
@@ -352,7 +364,7 @@ function ProductCard({ product }) {
         <div className="price-row">
           <div>
             <span>Current Price</span>
-            <strong>${latestPrice.toFixed(2)}</strong>
+            <strong>{formatCurrency(latestPrice)}</strong>
           </div>
           <div className={priceDropped ? 'delta down' : 'delta up'}>
             {priceDropped ? <TrendingDown size={15} /> : <TrendingUp size={15} />}
@@ -360,7 +372,7 @@ function ProductCard({ product }) {
           </div>
           <div className="target">
             <span>Target</span>
-            <strong>${Number(product.targetPrice || latestPrice).toFixed(2)}</strong>
+            <strong>{formatCurrency(Number(product.targetPrice || latestPrice))}</strong>
           </div>
         </div>
         <div className="progress-label">
