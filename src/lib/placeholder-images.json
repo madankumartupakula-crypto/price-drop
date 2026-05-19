@@ -1,3 +1,22 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "tech-product-1",
+      "description": "Premium Wireless Headphones",
+      "imageUrl": "https://picsum.photos/seed/tech1/600/400",
+      "imageHint": "wireless headphones"
+    },
+    {
+      "id": "tech-product-2",
+      "description": "Smart Watch Pro",
+      "imageUrl": "https://picsum.photos/seed/tech2/600/400",
+      "imageHint": "smart watch"
+    },
+    {
+      "id": "tech-product-3",
+      "description": "Mechanical Keyboard",
+      "imageUrl": "https://picsum.photos/seed/tech3/600/400",
+      "imageHint": "mechanical keyboard"
+    }
+  ]
 }
