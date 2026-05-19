@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -7,25 +6,44 @@ import { AppSidebar } from '@/components/dashboard/AppSidebar';
 import { ProductGrid } from '@/components/dashboard/ProductGrid';
 import { AddProductDialog } from '@/components/dashboard/AddProductDialog';
 import { TrackedProduct } from '@/components/dashboard/ProductCard';
-import { Activity, Bell, Settings, Search, User } from 'lucide-react';
+import { Activity, Bell, Settings, Search, User, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Dashboard() {
   const [products, setProducts] = useState<TrackedProduct[]>([]);
   const [search, setSearch] = useState('');
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // In a real MongoDB setup, you would fetch products from an API route here
-    // For now, we start with a completely fresh state as requested
-    setProducts([]);
-    setIsLoaded(true);
+    fetchProducts();
   }, []);
 
-  const handleAddProduct = (newProductData: any) => {
-    const newProduct: TrackedProduct = {
-      id: Math.random().toString(36).substr(2, 9),
+  const fetchProducts = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/products');
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Could not load products from MongoDB.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddProduct = async (newProductData: any) => {
+    const tempId = Math.random().toString(36).substr(2, 9);
+    const newProduct: Omit<TrackedProduct, 'id'> = {
       name: newProductData.name,
       imageUrl: newProductData.imageUrl || 'https://picsum.photos/seed/placeholder/600/400',
       currentPrice: newProductData.currentPrice,
@@ -38,15 +56,39 @@ export default function Dashboard() {
         { date: new Date().toISOString(), price: newProductData.currentPrice }
       ]
     };
-    setProducts(prev => [newProduct, ...prev]);
+
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const savedProduct = { ...newProduct, id: result.id } as TrackedProduct;
+        setProducts(prev => [savedProduct, ...prev]);
+        toast({
+          title: "Success",
+          description: "Product is now being tracked.",
+        });
+      } else {
+        throw new Error('Failed to save to DB');
+      }
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast({
+        variant: "destructive",
+        title: "Save Failed",
+        description: "Your product was found but could not be saved to the database.",
+      });
+    }
   };
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
     p.retailer.toLowerCase().includes(search.toLowerCase())
   );
-
-  if (!isLoaded) return null;
 
   return (
     <SidebarProvider>
@@ -102,13 +144,13 @@ export default function Dashboard() {
               <AddProductDialog onAdd={handleAddProduct} />
             </div>
 
-            {/* Stats Summary - Dynamically updated */}
+            {/* Stats Summary */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: 'Total Tracked', value: products.length, trend: products.length > 0 ? 'Active monitoring' : 'Ready to start' },
                 { label: 'Active Alerts', value: '0', trend: 'No price hits yet' },
                 { label: 'Tracked Retailers', value: Array.from(new Set(products.map(p => p.retailer))).length, trend: 'Across retailers' },
-                { label: 'Market Pulse', value: 'N/A', trend: 'Add data to analyze' },
+                { label: 'Market Pulse', value: 'Live', trend: 'Syncing with MongoDB' },
               ].map((stat, i) => (
                 <div key={i} className="p-4 rounded-xl bg-card border border-border/50 space-y-1">
                   <span className="text-xs text-muted-foreground font-medium uppercase">{stat.label}</span>
@@ -118,7 +160,14 @@ export default function Dashboard() {
               ))}
             </div>
 
-            <ProductGrid products={filteredProducts} onAddClick={() => {}} />
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
+                <p className="text-muted-foreground">Syncing with database...</p>
+              </div>
+            ) : (
+              <ProductGrid products={filteredProducts} onAddClick={() => {}} />
+            )}
           </main>
         </SidebarInset>
       </div>
