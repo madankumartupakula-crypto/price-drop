@@ -34,7 +34,7 @@ export default function Dashboard() {
       toast({
         variant: "destructive",
         title: "Connection Error",
-        description: "Could not load products from MongoDB.",
+        description: "Could not load products from MongoDB. Check your network or connection string.",
       });
     } finally {
       setIsLoading(false);
@@ -42,7 +42,6 @@ export default function Dashboard() {
   };
 
   const handleAddProduct = async (newProductData: any) => {
-    const tempId = Math.random().toString(36).substr(2, 9);
     const newProduct: Omit<TrackedProduct, 'id'> = {
       name: newProductData.name,
       imageUrl: newProductData.imageUrl || 'https://picsum.photos/seed/placeholder/600/400',
@@ -70,7 +69,7 @@ export default function Dashboard() {
         setProducts(prev => [savedProduct, ...prev]);
         toast({
           title: "Success",
-          description: "Product is now being tracked.",
+          description: `${newProduct.name} is now being tracked.`,
         });
       } else {
         throw new Error('Failed to save to DB');
@@ -120,8 +119,8 @@ export default function Dashboard() {
               <div className="h-8 w-px bg-border/50 mx-2" />
               <div className="flex items-center gap-3 pl-2">
                 <div className="hidden sm:block text-right">
-                  <p className="text-sm font-bold leading-none">User</p>
-                  <p className="text-xs text-muted-foreground">Free Account</p>
+                  <p className="text-sm font-bold leading-none">Sumith</p>
+                  <p className="text-xs text-muted-foreground">Premium Account</p>
                 </div>
                 <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold border border-primary/20 cursor-pointer hover:bg-primary/30 transition-all">
                   <User className="w-5 h-5" />
@@ -152,7 +151,7 @@ export default function Dashboard() {
                 { label: 'Tracked Retailers', value: Array.from(new Set(products.map(p => p.retailer))).length, trend: 'Across retailers' },
                 { label: 'Market Pulse', value: 'Live', trend: 'Syncing with MongoDB' },
               ].map((stat, i) => (
-                <div key={i} className="p-4 rounded-xl bg-card border border-border/50 space-y-1">
+                <div key={i} className="p-4 rounded-xl bg-card border border-border/50 space-y-1 shadow-sm">
                   <span className="text-xs text-muted-foreground font-medium uppercase">{stat.label}</span>
                   <div className="text-2xl font-bold font-headline">{stat.value}</div>
                   <div className="text-[10px] text-primary font-bold uppercase tracking-tighter">{stat.trend}</div>
