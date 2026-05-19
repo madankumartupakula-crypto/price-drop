@@ -46,3 +46,11 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# editor and environment
+.vscode/
+.idea/
+
+# package folders
+/client/node_modules/
+/server/node_modules/
