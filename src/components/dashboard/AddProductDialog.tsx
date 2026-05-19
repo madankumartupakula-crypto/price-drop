@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -19,22 +20,19 @@ export function AddProductDialog({ onAdd }: { onAdd: (data: any) => void }) {
     if (!url) return;
     setLoading(true);
     try {
-      // In a real app, this server action would be called.
-      // For the demo, we simulate a small delay then return mock data if the scraper fails or for speed.
-      // const details = await extractProductDetails({ url });
+      // Calling the actual Genkit AI flow
+      const details = await extractProductDetails({ url });
       
-      // Simulating AI extraction
-      await new Promise(r => setTimeout(r, 2000));
-      
-      const mockResult = {
-        name: "Sony WH-1000XM5 Wireless Noise Canceling Headphones",
-        imageUrl: "https://picsum.photos/seed/sony5/600/400",
-        currentPrice: 398.00,
+      const result = {
+        name: details.name,
+        imageUrl: details.imageUrl,
+        currentPrice: details.currentPrice,
         retailer: new URL(url).hostname.replace('www.', ''),
-        targetPrice: 350.00
+        url: url,
+        targetPrice: details.currentPrice * 0.9 // Default 10% target drop
       };
 
-      onAdd(mockResult);
+      onAdd(result);
       toast({
         title: "Product Found",
         description: "AI successfully extracted product details.",
@@ -42,10 +40,11 @@ export function AddProductDialog({ onAdd }: { onAdd: (data: any) => void }) {
       setOpen(false);
       setUrl('');
     } catch (error) {
+      console.error("Scraping error:", error);
       toast({
         variant: "destructive",
         title: "Scrape Failed",
-        description: "Could not extract details. Please try another URL.",
+        description: "Could not extract details. The website might be blocking access or the content is unavailable.",
       });
     } finally {
       setLoading(false);
