@@ -16,7 +16,30 @@ async function sendEmailOtp(identifier, otp) {
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
-    throw new Error(`Email OTP is not configured. Missing: ${missing.join(', ')}`);
+    console.warn(`Email OTP is not fully configured. Missing: ${missing.join(', ')} - falling back to a test account.`);
+
+    const testAccount = await nodemailer.createTestAccount();
+    const transporter = nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+      }
+    });
+
+    const info = await transporter.sendMail({
+      from: `PricePulse <${testAccount.user}>`,
+      to: identifier,
+      subject: 'Your PricePulse login OTP (test)',
+      text: `Your PricePulse OTP is ${otp}. It expires in 10 minutes.`,
+      html: `<p>Your PricePulse OTP is <strong>${otp}</strong>.</p><p>It expires in 10 minutes.</p>`
+    });
+
+    const preview = nodemailer.getTestMessageUrl(info);
+    if (preview) console.log('Preview email available at:', preview);
+    return;
   }
 
   const transporter = nodemailer.createTransport({
